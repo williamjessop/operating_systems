@@ -16,8 +16,8 @@ struct Context{
 
 void saveRegi(Context *threadContext){
   asm("str x1, [x0, #0]");
-  asm("str x29, [x0, #8]");
-  asm("str x30, [x0, #16]");
+  asm("str x27, [x0, #8]");
+  asm("str x28, [x0, #16]");
   asm("mov x1, sp");
   asm("str x1, [x0, #24]");
   //cout << "Saving regis" << endl;
@@ -41,12 +41,15 @@ int activeThread = 1;
 void startThread(ThreadFun *f) {
   //This function needs to enumerate the thread
   cout << "starting thread" << endl;
-  if(threadCount == 0){
+  if(threadCount == 0){ //AKA main is calling
+    asm("mov x27, x29");
+    asm("mov x28, x30");
     saveRegi(&thread0);
   }
   
   threadCount += 1;
 
+  //asm("blr x0");
   f(threadCount);
 }
 
@@ -61,13 +64,31 @@ void sharecpu(int threadNum) {
   //decide the next thread to go
   //load the next threads state
 
-  //In this case only main and main1 are live
-  cout << "Sharing CPU" << endl;
-  saveRegi(&thread1);
-  loadRegi(&thread0);
 
-  asm("ret x28"); //I can think of this like "ldr pc, x30"
-   
+  //OK so my method will just be round robin
+  //If main is the caller, load thread1
+  //If thread1 is the caller, load thread2
+  //if thread2 is the caller, load main
+  //In this case only main and main1 are live, there is no thread 2 to load
+  asm("mov x27, x29");
+  asm("mov x28, x30");
+  
+  if(threadCount == 1){
+    saveRegi(&thread1);
+    loadRegi(&thread0);
+  }else if(threadNum == 0){ //AKA main is the caller
+    saveRegi(&thread0);
+    loadRegi(&thread1);
+  }else if(threadNum == 1){
+    saveRegi(&thread1);
+    loadRegi(&thread2);
+  }else if(threadNum == 2){
+    saveRegi(&thread2);
+    loadRegi(&thread0);
+  }
+
+  asm("mov x29, x27");
+  asm("mov x30, x28"); 
     
   // else if(threadNum == 1)
   //   asm("sub sp, sp, #32\n\t"
@@ -106,7 +127,7 @@ void main2(int thread) {
 }
 
 int main() { 
-  cout << "Top of main" << endl;
+  //cout << "Top of main" << endl;
   startThread(main1);
   cout << "Back to Main" << endl;
   startThread(main2);
