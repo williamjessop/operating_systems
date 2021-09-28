@@ -121,6 +121,3 @@ int main() {
   }
   return 0;
 }
-
-
-//bt tool in GDB
