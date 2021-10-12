@@ -24,6 +24,7 @@ struct Context{
   long x13; // 120
   long x14; // 128
   long x15; // 136
+  long x0; // 144
 };
 
 Context contexts[10];
@@ -101,6 +102,9 @@ void loadRegi(Context *threadContext){
   asm("mov sp, x1");
 
   asm("ldr x1, [x0, #24]");
+
+  asm("mov x17, x0");
+  asm("ldr x0, [x17, #144]");
 }
 
 void setStackRun(ThreadFun *f, char* stack){
@@ -112,9 +116,8 @@ void setStackRun(ThreadFun *f, char* stack){
 void startThread(ThreadFun *f) {
   Context * contextPointer = &(contexts[activeThread]);
   asm("str fp, [%[cp], #0]" : [cp] "=r" (contextPointer));
-  
-  contextPointer = &(contexts[activeThread]);
   asm("str lr, [%[cp], #8]" : [cp] "=r" (contextPointer));
+  asm("str x0, [%[cp], #144]" : [cp] "=r" (contextPointer));
   
   saveRegiSome(&(contexts[activeThread]));
 
@@ -127,22 +130,25 @@ void startThread(ThreadFun *f) {
 }
 
 void sharecpu(int threadNum) {
+  // Context * contextPointer = &(contexts[activeThread]);
+  // asm("str fp, [%[cp], #0]" : [cp] "=r" (contextPointer));
+  
+  // contextPointer = &(contexts[activeThread]);
+  // asm("str lr, [%[cp], #8]" : [cp] "=r" (contextPointer));
+
   Context * contextPointer = &(contexts[activeThread]);
-  asm("str fp, [%[cp], #0]" : [cp] "=r" (contextPointer));
+  asm("str x0, [%[cp], #144]" : [cp] "=r" (contextPointer));
   
-  contextPointer = &(contexts[activeThread]);
-  asm("str lr, [%[cp], #8]" : [cp] "=r" (contextPointer));
-  
-  saveRegiSome(&(contexts[activeThread]));
-  cout << activeThread << endl;
+  saveRegi(&(contexts[activeThread]));
+  //cout << activeThread << endl;
 
   activeThread++;
   if(activeThread>=threadCount) activeThread=0;
 
   loadRegi(&(contexts[activeThread]));
 
-  //This is for stack alignment and to preserve values loaded by loadregi
-  //asm("stp x29, x30, [sp, #0x20]");
+  
+  asm("stp x29, x30, [sp, #0x20]");
 }
 
 /* Change nothing below this line.  Get the program to execute the code
