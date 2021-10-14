@@ -150,7 +150,7 @@ void sharecpu(int threadNum) {
 void main1(int threadNum) {
   for (int i=0;i<10;i++) {
       cout << "Main 1 says Hello" << endl;
-      usleep(100000);
+      usleep(1000);
       sharecpu(threadNum);
   }
 }
@@ -158,7 +158,7 @@ void main1(int threadNum) {
 void main2(int thread) {
   for (int i=0;i<10;i++) {
     cout << "Main 2 says Hello" << endl;
-    usleep(100000);
+    usleep(1000);
     sharecpu(thread);
   }
 }
@@ -169,7 +169,7 @@ int main() {
   startThread(main2);
   while (true) {
         cout << "Main says hello" << endl;
-        usleep(100000);
+        usleep(1000);
         sharecpu(0);
   }
   return 0;
