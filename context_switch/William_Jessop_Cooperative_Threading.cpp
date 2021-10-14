@@ -51,8 +51,7 @@ int threadCount = 0;
 int activeThread = 0;
 
 void saveRegi(Context *threadContext){ //Skips saving the FP and LR
-  asm("str x1, [x0, #24]"); 
-
+  asm("str x1, [x0, #24]");
   asm("str x2, [x0, #32]");
   asm("str x3, [x0, #40]");
   asm("str x4, [x0, #48]");
@@ -115,8 +114,6 @@ void loadRegi(Context *threadContext){
   asm("ldr x26, [x0, #216]");
   asm("ldr x27, [x0, #224]");
   asm("ldr x28, [x0, #232]");
-
-  //Register x18 is reserved for the platform
   
   //You cannot load or store the stack pointer directly in ARM64
   //Therefor I have to use another register as a temporary space
@@ -127,7 +124,7 @@ void loadRegi(Context *threadContext){
 }
 
 void setStackRun(ThreadFun *f, char* stack){
-  //This function will automatically store x0 on the old stack before this operation
+  //This automatically stores x0 on the old stack before this operation
   asm("mov sp, x1");
 
   //I need to push x0 back on the stack where the compiler expexts it to be
