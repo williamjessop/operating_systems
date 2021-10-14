@@ -25,7 +25,21 @@ struct Context{
   long x13; // 120
   long x14; // 128
   long x15; // 136
-  long x0; // 144
+  long x16; // 144
+  long x17; // 152
+  //x18 is reserved as a platform register
+  long x19; // 160
+  long x20; // 168
+  long x21; // 176
+  long x22; // 184
+  long x23; // 192
+  long x24; // 200
+  long x25; // 208
+  long x26; // 216
+  long x27; // 224
+  long x28; // 232
+
+  long x0; // 240
 };
 
 //These arrays could be made bigger to accadate more threads
@@ -53,6 +67,19 @@ void saveRegi(Context *threadContext){ //Skips saving the FP and LR
   asm("str x13, [x0, #120]");
   asm("str x14, [x0, #128]");
   asm("str x15, [x0, #136]");
+  asm("str x17, [x0, #152]");
+  asm("str x16, [x0, #144]");
+  //x18 is reserved for the platform
+  asm("str x19, [x0, #160]");
+  asm("str x20, [x0, #168]");
+  asm("str x21, [x0, #176]");
+  asm("str x22, [x0, #184]");
+  asm("str x23, [x0, #192]");
+  asm("str x24, [x0, #200]");
+  asm("str x25, [x0, #208]");
+  asm("str x26, [x0, #216]");
+  asm("str x27, [x0, #224]");
+  asm("str x28, [x0, #232]");
 
   //You cannot load or store the stack pointer directly in ARM64
   //Therefor I have to use another register as a temporary space
@@ -75,6 +102,19 @@ void loadRegi(Context *threadContext){
   asm("ldr x13, [x0, #120]");
   asm("ldr x14, [x0, #128]");
   asm("ldr x15, [x0, #136]");
+  asm("ldr x16, [x0, #144]");
+  asm("ldr x17, [x0, #152]");
+  //x18 is reserved for the platform
+  asm("ldr x19, [x0, #160]");
+  asm("ldr x20, [x0, #168]");
+  asm("ldr x21, [x0, #176]");
+  asm("ldr x22, [x0, #184]");
+  asm("ldr x23, [x0, #192]");
+  asm("ldr x24, [x0, #200]");
+  asm("ldr x25, [x0, #208]");
+  asm("ldr x26, [x0, #216]");
+  asm("ldr x27, [x0, #224]");
+  asm("ldr x28, [x0, #232]");
 
   //Register x18 is reserved for the platform
   
@@ -101,7 +141,7 @@ void startThread(ThreadFun *f) {
   Context * contextPointer = &(contexts[activeThread]);
   asm("str fp, [%[cp], #0]" : [cp] "=r" (contextPointer));
   asm("str lr, [%[cp], #8]" : [cp] "=r" (contextPointer));
-  asm("str x0, [%[cp], #144]" : [cp] "=r" (contextPointer));
+  asm("str x0, [%[cp], #240]" : [cp] "=r" (contextPointer));
   
   saveRegi(&(contexts[activeThread]));
 
@@ -120,7 +160,7 @@ void sharecpu(int threadNum) {
   Context * contextPointer = &(contexts[activeThread]);
   asm("str fp, [%[cp], #0]" : [cp] "=r" (contextPointer));
   asm("str lr, [%[cp], #8]" : [cp] "=r" (contextPointer));
-  asm("str x0, [%[cp], #144]" : [cp] "=r" (contextPointer));
+  asm("str x0, [%[cp], #240]" : [cp] "=r" (contextPointer));
   
   saveRegi(&(contexts[activeThread]));
 
@@ -128,16 +168,18 @@ void sharecpu(int threadNum) {
   activeThread++;
 
   //Select next thread at random
-  //Note: When using the random selection the program will die whenever one of the created threads finishes
   //activeThread = (rand() % (threadCount+1));
+  
+  //Note: When using the random selection the program will die whenever one of the created threads finishes
 
   //this check is needed for either RR or Random
   if(activeThread>threadCount) activeThread=0;
 
   loadRegi(&(contexts[activeThread]));
+  //These have to be loaded after coming back from loadRegi for the same reason as above when saving
   asm("ldr fp, [%[cp], #0]" : [cp] "=r" (contextPointer));
   asm("ldr lr, [%[cp], #8]" : [cp] "=r" (contextPointer));
-  asm("ldr x0, [%[cp], #144]" : [cp] "=r" (contextPointer));
+  asm("ldr x0, [%[cp], #240]" : [cp] "=r" (contextPointer));
 }
 
 /* Change nothing below this line.  Get the program to execute the code
@@ -169,7 +211,7 @@ int main() {
   startThread(main2);
   while (true) {
         cout << "Main says hello" << endl;
-        usleep(1000);
+        usleep(100);
         sharecpu(0);
   }
   return 0;
